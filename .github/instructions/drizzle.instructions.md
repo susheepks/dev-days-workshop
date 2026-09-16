@@ -55,6 +55,12 @@ export async function getAllGameIds(db: Database): Promise<number[]> {
 - Map raw rows to the app-facing `Game`/`Publisher`/`Category` types in one place; don't leak Drizzle row shapes into components.
 - Keep ordering/lookup logic in `games.ts`, not in pages.
 
+### Exported Function Documentation
+
+- Every exported function in `db/` and `src/lib/` must have a TSDoc/JSDoc comment describing its purpose, each parameter, and its return value. Document the injectable `db` parameter explicitly so the production-versus-test boundary remains clear.
+- Keep comments focused on intent, invariants, and non-obvious data decisions. Do not document routine SQL or TypeScript mechanics that are already apparent from the implementation.
+- Update or remove documentation whenever the function's behavior, parameters, or return type changes.
+
 ## Determinism
 
 Seed-derived values must be reproducible across builds. Derive star ratings from a stable hash of the title (`ratingFromTitle`) — **never** `Math.random()`.
@@ -70,3 +76,9 @@ Node.js 22.13 or later is required because the data layer uses the built-in `nod
 ## Type checking
 
 The data layer (`db/**/*.ts`, `src/lib/*.ts`) is type-checked by `npm run typecheck`, which runs the native **TypeScript 7** compiler (`tsgo`, from `@typescript/native-preview`) against `tsconfig.tsgo.json`. Keep helpers exported with explicit parameter and return types so `tsgo` can verify them. Linting is unaffected — ESLint + `typescript-eslint` still run on the classic `typescript` package.
+
+## TypeScript Formatting
+
+- Use four spaces for TypeScript indentation, single quotes for strings, and trailing commas in multiline lists and objects, matching the existing data-layer style.
+- Keep type-only dependencies in `import type` declarations where practical, and give exported functions explicit parameter and return types.
+- The scoped ESLint configuration enforces explicit types at module boundaries in `db/` and `src/lib/`; run `npm run lint` after changing the data layer.
