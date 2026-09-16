@@ -1,4 +1,4 @@
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and, inArray } from 'drizzle-orm';
 import type { Database } from './db';
 import { games, categories, publishers } from '../../db/schema';
 import type { Game } from '../types/game';
@@ -50,10 +50,50 @@ function baseGamesQuery(db: Database) {
         .leftJoin(publishers, eq(games.publisherId, publishers.id));
 }
 
+export interface GameFilters {
+    categoryIds?: number[];
+    publisherId?: number | null;
+}
+
 /** All games ordered by title. */
 export async function getAllGames(db: Database): Promise<Game[]> {
     const rows = await baseGamesQuery(db).orderBy(asc(games.title));
     return rows.map(mapGame);
+}
+
+/** Games filtered by category and/or publisher. */
+export async function getGamesByFilters(db: Database, filters: GameFilters = {}): Promise<Game[]> {
+    const conditions = [];
+
+    if (filters.categoryIds && filters.categoryIds.length > 0) {
+        conditions.push(inArray(games.categoryId, filters.categoryIds));
+    }
+
+    if (filters.publisherId !== undefined && filters.publisherId !== null) {
+        conditions.push(eq(games.publisherId, filters.publisherId));
+    }
+
+    const query =
+        conditions.length > 0 ? baseGamesQuery(db).where(and(...conditions)) : baseGamesQuery(db);
+
+    const rows = await query.orderBy(asc(games.title));
+    return rows.map(mapGame);
+}
+
+/** All category records ordered by name. */
+export async function getAllCategories(db: Database): Promise<Array<{ id: number; name: string }>> {
+    return db
+        .select({ id: categories.id, name: categories.name })
+        .from(categories)
+        .orderBy(asc(categories.name));
+}
+
+/** All publisher records ordered by name. */
+export async function getAllPublishers(db: Database): Promise<Array<{ id: number; name: string }>> {
+    return db
+        .select({ id: publishers.id, name: publishers.name })
+        .from(publishers)
+        .orderBy(asc(publishers.name));
 }
 
 /** All game ids ordered by title. */
